@@ -1,0 +1,56 @@
+#!/usr/bin/python3
+# @Author: Jing
+# @Time: 2018/6/13, 11:54
+# -*- coding: UTF-8 -*-
+import numpy
+from Tools import readbunchobj
+
+'''
+    This multinomial Naive Bayes classifier is suitable for classification with
+    discrete tf-idf features.
+'''
+
+def multinomialNB(self, X, Y, laplace = 1.0):
+    numClass = 0
+    numTrainDoc = len(X)
+    numWords = len(X[0])
+
+    self.cls_dict = {}  # 给每个类一个下标，从0开始，方便下面计算self.conditional_probability
+    self.prior_probability = {}  # 先验概率，共有numClass个
+    for cls in Y:
+        if cls in self.prior_probability.keys():
+            self.prior_probability[cls] += 1
+        else:
+            self.prior_probability[cls] = 1
+            self.cls_dict[cls] = numClass
+            numClass += 1
+    print(self.prior_probability)
+
+    self.conditional_probability = [numpy.array([laplace] * numWords) for i in range(numClass)]  # 将所有词的权重初始化为1，拉普拉斯平滑
+    sum_all_weight = [0.0 + float(laplace * numClass)] * numClass  # 每个类所有词的总权重+类别数，“+类别数”的原因：等会做分母，拉普拉斯平滑
+    '''
+        1.将tfidf矩阵中相同类别的文本向量相加，形成numClass*numWords的矩阵
+        2.将每一个词的权重除以该类所有词的总权重（sum_all_weight[cls_index]）
+    '''
+    for each in range(numTrainDoc):
+        cls = Y[each]
+        cls_index = self.cls_dict[cls]
+        self.conditional_probability[cls_index] += X[each]
+        sum_all_weight[cls_index] += sum(X[each])
+    for each in range(numClass):
+        self.conditional_probability[each] = numpy.log(self.conditional_probability[each]/sum_all_weight[each])
+    print(self.conditional_probability)
+
+
+if __name__ == '__main__':
+    cwd = "D:\Documents\学习\课程\机器学习 高志强\文本分类\中文文本分类python3.6/chinese_text_classification-master/"
+
+    # 导入训练集
+    trainpath = cwd + "train_word_bag/tfdifspace.dat"
+    train_set = readbunchobj(trainpath)
+    multinomialNB(train_set.tdm, train_set.label)
+
+
+
+
+
